@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+
+model Users {
+   id                String @id @default(uuid()) @map("_id")
+   username          String @unique
+   email             String @unique
+   password          String
+   country           String
+   bio               String?
+   avatarUrl         String?
+   reputation        Int    @default(0)
+   role              Role   @default(USER)
+
+   createdAt         DateTime @default(now())
+   updatedAt         DateTime @updatedAt
+
+
+   questions         Questions[]
+   answers           Answer[]
+   questionVote      QuestionVote[]
+   answerVote        AnswerVote[]
+
+
+  @@index([country])
+  @@index([reputation])
+
+
+   
+}
+
+model Questions {
+   id                String @id @default(uuid()) @map("_id")
+   title             String 
+   body              String 
+   tags              String[]
+   score             Int      @default(0)
+   viewCount         Int      @default(0)
+   answerCount       Int      @default(0)
+   isSolved          Boolean  @default(false)
+   avatarUrl         String?
+   reputation        Int    @default(0)
+   role              Role   @default(USER)
+
+   createdAt         DateTime @default(now())
+   updatedAt         DateTime @updatedAt
+
+
+   //relations
+
+   userId            String
+   user              Users @relation(fields: [userId], references: [id], onDelete:Cascade)
+
+
+   votes             QuestionVote[]
+   answer            Answer[]
+
+  @@index([createdAt])
+  @@index([score])
+  @@index([userId])
+  @@index([tags])
+
+   
+
+}
+
+model Answer {
+  id                 String @id @default(uuid()) @map("_id")
+  body               String
+  score              Int      @default(0)
+  isAccepted         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  //relations
+
+  userId            String
+  user              Users @relation(fields: [userId], references: [id], onDelete:Cascade)
+
+  questionId        String
+  question          Questions @relation(fields: [questionId], references: [id], onDelete:Cascade)
+
+  votes             AnswerVote[]
+
+  @@index([questionId])
+  @@index([userId])
+  
+}
+
+
+model QuestionVote {
+  id                 String @id @default(uuid()) @map("_id")
+  value              Int
+  createdAt          DateTime @default(now())
+
+
+  userId            String
+  user              Users @relation(fields: [userId], references: [id], onDelete:Cascade)
+
+  questionId        String
+  question          Questions @relation(fields: [questionId], references: [id], onDelete:Cascade)
+
+  @@unique([userId, questionId])
+
+}
+
+model AnswerVote {
+  id                 String @id @default(uuid()) @map("_id")
+  value              Int 
+  createdAt          DateTime @default(now())
+
+
+  userId            String
+  user              Users @relation(fields: [userId], references: [id], onDelete:Cascade)
+
+  answerId          String
+  answer            Answer @relation(fields: [answerId], references: [id], onDelete:Cascade)
+
+  @@unique([userId, answerId])
+
+}
