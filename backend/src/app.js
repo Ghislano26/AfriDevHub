@@ -2,6 +2,7 @@ import express from 'express'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import cors from 'cors'
+import userRoute from './routes/user.route.js'
 
 const app = express()
 
@@ -22,7 +23,7 @@ app.use(cors)
 
 //routing
 
-
+app.use('/api/auth/', userRoute)
 
 
 
